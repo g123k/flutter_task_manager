@@ -1,0 +1,39 @@
+name: task_manager
+description: A task manager for Flutter projects
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: ">=2.17.6 <3.0.0"
+  flutter: ">=2.5.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  connectivity_plus: ^2.3.6
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  synchronized: ^3.0.0+2
+  workmanager: ^0.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.1
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: fr.g123k.task_manager
+        pluginClass: TaskManagerPlugin
+      ios:
+        pluginClass: TaskManagerPlugin
+      linux:
+        pluginClass: TaskManagerPlugin
+      macos:
+        pluginClass: TaskManagerPlugin
+      windows:
+        pluginClass: TaskManagerPluginCApi
