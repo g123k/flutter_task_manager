@@ -46,7 +46,7 @@ class TaskManager {
     // Runner will automatically start at the same time
   }
 
-  Future<void> addTask(Task task) async {
+  Future<int> addTask(Task task) async {
     assert(
       isInitialized == true,
       'Runner is not initialized, please ensure to call the init method!',
@@ -70,6 +70,8 @@ class TaskManager {
     } else if (_runner?.isRunning == true) {
       _runner!.runPendingTasks(task);
     }
+
+    return hiveTask.uniqueId;
   }
 
   Future<String?> _registerTaskWithWorkManager(HiveTask task) async {
