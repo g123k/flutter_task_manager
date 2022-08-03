@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:task_manager/src/connectivity/task_manager_connectivity_listener.dart';
 import 'package:task_manager/src/model/task.dart';
 import 'package:task_manager/src/storage/model/hive_task.dart';
@@ -74,7 +75,15 @@ class TaskManagerRunner {
 
       try {
         await _markTaskAsRunning(task);
-        TaskResult result = await executor!.call(task);
+        _TaskData taskData = _TaskData(executor: executor!, task: task);
+
+        final TaskResult result;
+        if (task.runInAnIsolate) {
+          result = await compute(_runTask, taskData);
+        } else {
+          result = await _runTask(taskData);
+        }
+
         if (result == TaskResult.success) {
           await _markTaskAsSuccessful(task);
         } else {
@@ -151,4 +160,18 @@ class TaskManagerRunner {
       _checkPendingTasks();
     }
   }
+}
+
+Future<TaskResult> _runTask(_TaskData data) async {
+  return data.executor.call(data.task);
+}
+
+class _TaskData {
+  final HiveTask task;
+  final TaskExecutor executor;
+
+  _TaskData({
+    required this.task,
+    required this.executor,
+  });
 }

@@ -10,16 +10,19 @@ class HiveTask extends Task {
   final DateTime? nextRetryMinDate;
   final TaskStatus status;
   final int currentRetryCount;
+  final bool runInAnIsolate;
 
   HiveTask.fromTask(
     Task task, {
     this.hiveId,
     this.workManagerId,
+    bool runTasksInIsolates = true,
   })  : dateAddedEvent = DateTime.now(),
         lastEvent = DateTime.now(),
         nextRetryMinDate = null,
         status = TaskStatus.added,
         currentRetryCount = 0,
+        runInAnIsolate = runTasksInIsolates,
         super(
           uniqueId: task.uniqueId,
           data: task.data,
@@ -37,6 +40,7 @@ class HiveTask extends Task {
     int? maxRetryCount,
     required this.lastEvent,
     required this.status,
+    required this.runInAnIsolate,
   }) : super(
           uniqueId: uniqueId,
           data: data,
@@ -51,6 +55,7 @@ class HiveTask extends Task {
     int? currentRetryCount,
     int? maxRetryCount,
     TaskStatus? status,
+    bool? runInAnIsolate,
   }) {
     return HiveTask._(
       hiveId: hiveId ?? this.hiveId,
@@ -63,6 +68,7 @@ class HiveTask extends Task {
       maxRetryCount: maxRetryCount ?? this.maxRetryCount,
       lastEvent: lastEvent ?? DateTime.now(),
       status: status ?? this.status,
+      runInAnIsolate: runInAnIsolate ?? this.runInAnIsolate,
     );
   }
 
@@ -114,6 +120,7 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
       }),
       status: TaskStatus.values[reader.readInt()],
       currentRetryCount: reader.readInt(),
+      runInAnIsolate: reader.readBool(),
     );
   }
 
@@ -129,6 +136,7 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
     writer.writeInt(obj.nextRetryMinDate?.millisecondsSinceEpoch ?? -1);
     writer.writeInt(obj.status.index);
     writer.writeInt(obj.currentRetryCount);
+    writer.writeBool(obj.runInAnIsolate);
   }
 
   Map<String, dynamic> _readMap(BinaryReader reader) {

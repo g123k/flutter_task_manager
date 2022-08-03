@@ -20,6 +20,7 @@ class TaskManager {
   TaskManagerLogger? _logger;
   TaskManagerListener? _listener;
   TaskManagerRunner? _runner;
+  bool? _runTasksInIsolates;
 
   TaskManager._internal() : _storage = TaskManagerStorage() {
     _storage.init();
@@ -29,14 +30,17 @@ class TaskManager {
     required TaskExecutor executor,
     TaskManagerListener? listener,
     TaskManagerLogger? logger,
+    bool runTasksInIsolates = true,
   }) async {
     _executor = executor;
     _logger = logger;
+    _runTasksInIsolates = runTasksInIsolates;
 
+    /* Temporary disabled
     await Workmanager().initialize(
       workManagerCallbackDispatcher,
       isInDebugMode: logger != null,
-    );
+    );*/
 
     _runner = TaskManagerRunner(executor, _storage, listener, logger);
     // Runner will automatically start at the same time
@@ -48,7 +52,10 @@ class TaskManager {
       'Runner is not initialized, please ensure to call the init method!',
     );
 
-    HiveTask hiveTask = HiveTask.fromTask(task);
+    HiveTask hiveTask = HiveTask.fromTask(
+      task,
+      runTasksInIsolates: _runTasksInIsolates!,
+    );
 
     // Always add task to the storage
     hiveTask = await _storage.addTask(hiveTask);
