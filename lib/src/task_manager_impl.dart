@@ -67,7 +67,7 @@ class TaskManager {
 
     if (workManagerId != null) {
       _storage.updateTask(hiveTask.cloneWith(workManagerId: workManagerId));
-    } else if (_runner?.isRunning == true) {
+    } else if (_runner?.isRunning == false) {
       _runner!.runPendingTasks(task);
     }
 
