@@ -26,7 +26,9 @@ class TaskManagerRunner {
 
   late StreamSubscription<bool> connectivitySubscription;
 
+  bool? _isConnected;
   bool _running = false;
+  int? _runningTaskId;
 
   TaskManagerRunner(
     this.executor,
@@ -36,6 +38,7 @@ class TaskManagerRunner {
   ) : connectivityListener = TaskManagerConnectivityListener() {
     connectivitySubscription =
         TaskManagerConnectivityListener().onConnectivityChanged.listen((event) {
+      _isConnected = event;
       if (event) {
         _checkPendingTasks();
       } else {
@@ -48,6 +51,8 @@ class TaskManagerRunner {
   }
 
   bool get isRunning => _running;
+
+  int? get runningTaskId => _runningTaskId;
 
   bool get hasConnection => connectivityListener.isConnectionAvailable;
 
@@ -68,9 +73,11 @@ class TaskManagerRunner {
     Iterable<HiveTask> tasks = await storage!.listPendingTasks();
     for (HiveTask task in tasks) {
       if (!_running) {
+        _runningTaskId = null;
         break;
       }
 
+      _runningTaskId = task.uniqueId;
       listener?.call(task, TaskStatus.running);
 
       try {
@@ -92,9 +99,15 @@ class TaskManagerRunner {
       } catch (err) {
         await _onTaskError(task, exception: err);
       }
+
+      _runningTaskId = null;
     }
 
     _running = false;
+
+    if (await storage?.hasPendingTasks == true) {
+      return _checkPendingTasks();
+    }
   }
 
   Future<void> _onTaskError(
@@ -156,7 +169,7 @@ class TaskManagerRunner {
   }
 
   void runPendingTasks(Task task) {
-    if (!_running) {
+    if (!_running && _isConnected == true) {
       _checkPendingTasks();
     }
   }

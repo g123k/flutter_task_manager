@@ -52,15 +52,30 @@ class TaskManager {
       'Runner is not initialized, please ensure to call the init method!',
     );
 
+    if (_runner?.runningTaskId == task.uniqueId) {
+      throw Exception('This task id is already running!');
+    }
+
+    TaskStatus status;
+    if (await _storage.findTask(task.uniqueId) != null) {
+      status = TaskStatus.replaced;
+    } else {
+      status = TaskStatus.added;
+    }
+
     HiveTask hiveTask = HiveTask.fromTask(
       task,
       runTasksInIsolates: _runTasksInIsolates!,
+      taskStatus: status,
     );
 
     // Always add task to the storage
     hiveTask = await _storage.addTask(hiveTask);
-    _listener?.call(hiveTask, TaskStatus.added);
-    _logger?.call(TaskManagerLog.info('New task added: ${hiveTask.uniqueId}'));
+    _listener?.call(hiveTask, status);
+    _logger?.call(
+      TaskManagerLog.info(
+          'New task ${status == TaskStatus.added ? 'added' : 'replaced'}: ${hiveTask.uniqueId}'),
+    );
 
     // WorkManager only used with no connection available and on Android
     String? workManagerId = await _registerTaskWithWorkManager(hiveTask);

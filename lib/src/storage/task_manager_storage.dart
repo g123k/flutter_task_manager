@@ -79,6 +79,27 @@ class TaskManagerStorage {
     );
   }
 
+  Future<bool> get hasPendingTasks =>
+      listPendingTasks().then((value) => value.isNotEmpty);
+
+  Future<HiveTask?> findTask(int uniqueId) async {
+    await _ensureInitialized();
+
+    return _lock.synchronized(
+      () => _box.get(uniqueId),
+      // Order by
+    );
+  }
+
+  void hasTask(int uniqueId) async {
+    await _ensureInitialized();
+
+    return _lock.synchronized(
+      () => _box.containsKey(uniqueId),
+      // Order by
+    );
+  }
+
   int _getMinKey() {
     if (_box.keys.isEmpty) {
       return -1;

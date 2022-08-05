@@ -17,10 +17,11 @@ class HiveTask extends Task {
     this.hiveId,
     this.workManagerId,
     bool runTasksInIsolates = true,
+    TaskStatus taskStatus = TaskStatus.added,
   })  : dateAddedEvent = DateTime.now(),
         lastEvent = DateTime.now(),
         nextRetryMinDate = null,
-        status = TaskStatus.added,
+        status = taskStatus,
         currentRetryCount = 0,
         runInAnIsolate = runTasksInIsolates,
         super(

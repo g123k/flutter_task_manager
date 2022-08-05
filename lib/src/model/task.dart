@@ -28,6 +28,9 @@ typedef TaskManagerListener = Function(Task task, TaskStatus status);
 enum TaskStatus {
   // Just added (never ran)
   added,
+  // The existing task is replaced by a new one (only possible if the status is
+  // not in running)
+  replaced,
   // Running
   running,
   // Ran at least one time with an error, but will retry later
