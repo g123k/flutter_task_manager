@@ -23,6 +23,7 @@ class TaskManagerRunner {
   final TaskExecutor? executor;
   final TaskManagerListener? listener;
   final TaskManagerLogger? logger;
+  final List<int> _tasksToIgnore = <int>[];
 
   late StreamSubscription<bool> connectivitySubscription;
 
@@ -75,6 +76,8 @@ class TaskManagerRunner {
       if (!_running) {
         _runningTaskId = null;
         break;
+      } else if (_tasksToIgnore.contains(task.hiveId)) {
+        continue;
       }
 
       _runningTaskId = task.uniqueId;
@@ -103,6 +106,7 @@ class TaskManagerRunner {
       _runningTaskId = null;
     }
 
+    _tasksToIgnore.clear();
     _running = false;
 
     if (await storage?.hasPendingTasks == true) {
@@ -172,6 +176,26 @@ class TaskManagerRunner {
     if (!_running && _isConnected == true) {
       _checkPendingTasks();
     }
+  }
+
+  Future<bool> removeTaskId(int taskId) async {
+    HiveTask? task = await storage?.findTaskByUniqueId(taskId, lock: true);
+
+    if (task == null) {
+      return false;
+    }
+
+    if (_running) {
+      _tasksToIgnore.add(task.hiveId!);
+    }
+
+    await storage?.removeTask(task);
+    return true;
+  }
+
+  Future<void> removeAllTasks() async {
+    _tasksToIgnore.clear();
+    return storage?.clear();
   }
 }
 

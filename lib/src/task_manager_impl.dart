@@ -89,6 +89,32 @@ class TaskManager {
     return hiveTask.uniqueId;
   }
 
+  Future<bool> cancelTask(int taskId) async {
+    assert(
+      isInitialized == true,
+      'Runner is not initialized, please ensure to call the init method!',
+    );
+
+    if (_runner?.runningTaskId == taskId) {
+      throw Exception('This task id is already running!');
+    }
+
+    return _runner!.removeTaskId(taskId);
+  }
+
+  Future<void> cancelTasks() async {
+    assert(
+      isInitialized == true,
+      'Runner is not initialized, please ensure to call the init method!',
+    );
+
+    if (_runner?.isRunning == true) {
+      throw Exception('Runner is running, unable to remove tasks!');
+    }
+
+    return _runner!.removeAllTasks();
+  }
+
   Future<String?> _registerTaskWithWorkManager(HiveTask task) async {
     String? id;
 
