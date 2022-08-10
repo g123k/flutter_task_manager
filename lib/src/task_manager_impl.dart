@@ -119,6 +119,19 @@ class TaskManager {
     return _storage.listPublicPendingTasks();
   }
 
+  void runTask(int taskId) {
+    assert(
+      isInitialized == true,
+      'Runner is not initialized, please ensure to call the init method!',
+    );
+
+    if (_runner?.runningTaskId == taskId) {
+      throw Exception('This task is already running');
+    }
+
+    _runner!.forceRunTask(taskId);
+  }
+
   Future<String?> _registerTaskWithWorkManager(HiveTask task) async {
     String? id;
 

@@ -24,6 +24,7 @@ class TaskManagerRunner {
   final TaskManagerListener? listener;
   final TaskManagerLogger? logger;
   final List<int> _tasksToIgnore = <int>[];
+  final List<HiveTask> _tasksToExecute = <HiveTask>[];
 
   late StreamSubscription<bool> connectivitySubscription;
 
@@ -80,30 +81,22 @@ class TaskManagerRunner {
         continue;
       }
 
-      _runningTaskId = task.uniqueId;
-      listener?.call(task, TaskStatus.running);
+      await _runTask(task);
+    }
 
-      try {
-        await _markTaskAsRunning(task);
-        _TaskData taskData = _TaskData(executor: executor!, task: task);
-
-        final TaskResult result;
-        if (task.runInAnIsolate) {
-          result = await compute(_runTask, taskData);
-        } else {
-          result = await _runTask(taskData);
+    if (_tasksToExecute.isNotEmpty) {
+      for (HiveTask task in _tasksToExecute) {
+        if (!_running) {
+          _runningTaskId = null;
+          break;
+        } else if (_tasksToIgnore.contains(task.hiveId)) {
+          continue;
         }
 
-        if (result == TaskResult.success) {
-          await _markTaskAsSuccessful(task);
-        } else {
-          await _onTaskError(task, result: result);
-        }
-      } catch (err) {
-        await _onTaskError(task, exception: err);
+        await _runTask(task);
       }
 
-      _runningTaskId = null;
+      _tasksToExecute.clear();
     }
 
     _tasksToIgnore.clear();
@@ -112,6 +105,33 @@ class TaskManagerRunner {
     if (await storage?.hasPendingTasks == true) {
       return _checkPendingTasks();
     }
+  }
+
+  Future<void> _runTask(HiveTask task) async {
+    _runningTaskId = task.uniqueId;
+    listener?.call(task, TaskStatus.running);
+
+    try {
+      await _markTaskAsRunning(task);
+      _TaskData taskData = _TaskData(executor: executor!, task: task);
+
+      final TaskResult result;
+      if (task.runInAnIsolate) {
+        result = await compute(_runTaskExecutor, taskData);
+      } else {
+        result = await _runTaskExecutor(taskData);
+      }
+
+      if (result == TaskResult.success) {
+        await _markTaskAsSuccessful(task);
+      } else {
+        await _onTaskError(task, result: result);
+      }
+    } catch (err) {
+      await _onTaskError(task, exception: err);
+    }
+
+    _runningTaskId = null;
   }
 
   Future<void> _onTaskError(
@@ -197,9 +217,25 @@ class TaskManagerRunner {
     _tasksToIgnore.clear();
     return storage?.clear();
   }
+
+  Future<void> forceRunTask(int taskId) async {
+    HiveTask? task = await storage?.findTaskByUniqueId(taskId, lock: true);
+
+    if (task == null) {
+      throw Exception('This task does not exist or is already successful');
+    }
+
+    if (!_running) {
+      _running = true;
+      await _runTask(task);
+      _running = false;
+    } else {
+      _tasksToExecute.add(task);
+    }
+  }
 }
 
-Future<TaskResult> _runTask(_TaskData data) async {
+Future<TaskResult> _runTaskExecutor(_TaskData data) async {
   return data.executor.call(data.task);
 }
 
