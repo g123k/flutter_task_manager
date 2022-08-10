@@ -115,6 +115,10 @@ class TaskManager {
     return _runner!.removeAllTasks();
   }
 
+  Future<Iterable<Task>> listPendingTasks() {
+    return _storage.listPublicPendingTasks();
+  }
+
   Future<String?> _registerTaskWithWorkManager(HiveTask task) async {
     String? id;
 

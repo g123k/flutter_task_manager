@@ -125,6 +125,19 @@ class TaskManagerStorage {
     );
   }
 
+  Future<Iterable<HiveTask>> listPublicPendingTasks() async {
+    await _ensureInitialized();
+
+    return _lock.synchronized(
+      () => _box.values.where((HiveTask task) {
+        return [
+          TaskStatus.added,
+          TaskStatus.errorAndRetry,
+        ].contains(task.status);
+      }),
+    );
+  }
+
   Future<bool> get hasPendingTasks =>
       listPendingTasks().then((value) => value.isNotEmpty);
 
