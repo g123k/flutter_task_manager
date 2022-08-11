@@ -31,7 +31,7 @@ class HiveTask extends Task {
         );
 
   HiveTask._({
-    required int uniqueId,
+    required String uniqueId,
     this.hiveId,
     this.workManagerId,
     TaskData? data,
@@ -87,7 +87,7 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
   @override
   HiveTask read(BinaryReader reader) {
     return HiveTask._(
-      uniqueId: reader.readInt(),
+      uniqueId: reader.readString(),
       data: _readMap(reader),
       maxRetryCount: reader.readInt().let((int value) {
         if (value == -1) {
@@ -127,7 +127,7 @@ class HiveTaskAdapter extends TypeAdapter<HiveTask> {
 
   @override
   void write(BinaryWriter writer, HiveTask obj) {
-    writer.writeInt(obj.uniqueId);
+    writer.writeString(obj.uniqueId);
     _writeMap(writer, obj.data ?? <String, dynamic>{});
     writer.writeInt(obj.maxRetryCount ?? -1);
     writer.writeInt(obj.hiveId ?? -1);

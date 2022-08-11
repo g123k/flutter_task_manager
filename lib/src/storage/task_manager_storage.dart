@@ -44,7 +44,7 @@ class TaskManagerStorage {
   }
 
   Future<HiveTask?> findTaskByUniqueId(
-    int taskId, {
+    String taskId, {
     bool lock = false,
   }) async {
     await _ensureInitialized();
@@ -56,7 +56,7 @@ class TaskManagerStorage {
     }
   }
 
-  Future<HiveTask?> _findTaskByUniqueIdInternal(int taskId) async {
+  Future<HiveTask?> _findTaskByUniqueIdInternal(String taskId) async {
     try {
       return _box.values.firstWhere((HiveTask task) => task.uniqueId == taskId);
     } catch (err) {
@@ -89,7 +89,23 @@ class TaskManagerStorage {
     });
   }
 
-  Future<bool> removeTaskByUniqueId(int taskId) async {
+  Future<bool> removeTaskById(int taskId) async {
+    await _ensureInitialized();
+
+    return await _lock.synchronized(() async {
+      HiveTask? task;
+      try {
+        task = _box.values.firstWhere((HiveTask task) => task.hiveId == taskId);
+
+        await _box.delete(task.hiveId);
+        return true;
+      } catch (err) {
+        return false;
+      }
+    });
+  }
+
+  Future<bool> removeTaskByUniqueId(String taskId) async {
     await _ensureInitialized();
 
     return await _lock.synchronized(() async {
@@ -140,15 +156,6 @@ class TaskManagerStorage {
 
   Future<bool> get hasPendingTasks =>
       listPendingTasks().then((value) => value.isNotEmpty);
-
-  Future<HiveTask?> findTask(int uniqueId) async {
-    await _ensureInitialized();
-
-    return _lock.synchronized(
-      () => _box.get(uniqueId),
-      // Order by
-    );
-  }
 
   int _getMinKey() {
     if (_box.keys.isEmpty) {

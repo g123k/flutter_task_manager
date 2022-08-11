@@ -30,6 +30,7 @@ class TaskManagerRunner {
 
   bool? _isConnected;
   bool _running = false;
+  String? _runningUniqueTaskId;
   int? _runningTaskId;
 
   TaskManagerRunner(
@@ -56,6 +57,8 @@ class TaskManagerRunner {
 
   int? get runningTaskId => _runningTaskId;
 
+  String? get runningUniqueTaskId => _runningUniqueTaskId;
+
   bool get hasConnection => connectivityListener.isConnectionAvailable;
 
   void stop() {
@@ -76,6 +79,7 @@ class TaskManagerRunner {
     for (HiveTask task in tasks) {
       if (!_running) {
         _runningTaskId = null;
+        _runningUniqueTaskId = null;
         break;
       } else if (_tasksToIgnore.contains(task.hiveId)) {
         continue;
@@ -88,6 +92,7 @@ class TaskManagerRunner {
       for (HiveTask task in _tasksToExecute) {
         if (!_running) {
           _runningTaskId = null;
+          _runningUniqueTaskId = null;
           break;
         } else if (_tasksToIgnore.contains(task.hiveId)) {
           continue;
@@ -108,7 +113,8 @@ class TaskManagerRunner {
   }
 
   Future<void> _runTask(HiveTask task) async {
-    _runningTaskId = task.uniqueId;
+    _runningTaskId = task.hiveId!;
+    _runningUniqueTaskId = task.uniqueId;
     listener?.call(task, TaskStatus.running);
 
     try {
@@ -132,6 +138,7 @@ class TaskManagerRunner {
     }
 
     _runningTaskId = null;
+    _runningUniqueTaskId = null;
   }
 
   Future<void> _onTaskError(
@@ -198,8 +205,9 @@ class TaskManagerRunner {
     }
   }
 
-  Future<bool> removeTaskId(int taskId) async {
-    HiveTask? task = await storage?.findTaskByUniqueId(taskId, lock: true);
+  Future<bool> removeTaskId(String uniqueTaskId) async {
+    HiveTask? task =
+        await storage?.findTaskByUniqueId(uniqueTaskId, lock: true);
 
     if (task == null) {
       return false;
@@ -218,8 +226,9 @@ class TaskManagerRunner {
     return storage?.clear();
   }
 
-  Future<void> forceRunTask(int taskId) async {
-    HiveTask? task = await storage?.findTaskByUniqueId(taskId, lock: true);
+  Future<void> forceRunTask(String uniqueTaskId) async {
+    HiveTask? task =
+        await storage?.findTaskByUniqueId(uniqueTaskId, lock: true);
 
     if (task == null) {
       throw Exception('This task does not exist or is already successful');

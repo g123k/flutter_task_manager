@@ -1,14 +1,15 @@
 class Task {
-  final int uniqueId;
+  final String uniqueId;
   final TaskData? data;
   final int? maxRetryCount;
 
   Task({
-    int? uniqueId,
+    String? uniqueId,
     this.data,
     this.maxRetryCount,
   })  : assert(maxRetryCount == null || maxRetryCount > 0),
-        uniqueId = uniqueId ?? DateTime.now().millisecondsSinceEpoch;
+        uniqueId =
+            uniqueId ?? (DateTime.now().millisecondsSinceEpoch).toString();
 
   @override
   String toString() {

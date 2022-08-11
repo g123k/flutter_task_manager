@@ -46,18 +46,19 @@ class TaskManager {
     // Runner will automatically start at the same time
   }
 
-  Future<int> addTask(Task task) async {
+  /// Returns the task id
+  Future<String> addTask(Task task) async {
     assert(
       isInitialized == true,
       'Runner is not initialized, please ensure to call the init method!',
     );
 
-    if (_runner?.runningTaskId == task.uniqueId) {
+    if (_runner?.runningUniqueTaskId == task.uniqueId) {
       throw Exception('This task id is already running!');
     }
 
     TaskStatus status;
-    if (await _storage.findTask(task.uniqueId) != null) {
+    if (await _storage.findTaskByUniqueId(task.uniqueId) != null) {
       status = TaskStatus.replaced;
     } else {
       status = TaskStatus.added;
@@ -74,7 +75,8 @@ class TaskManager {
     _listener?.call(hiveTask, status);
     _logger?.call(
       TaskManagerLog.info(
-          'New task ${status == TaskStatus.added ? 'added' : 'replaced'}: ${hiveTask.uniqueId}'),
+        'New task ${status == TaskStatus.added ? 'added' : 'replaced'}: ${hiveTask.uniqueId}',
+      ),
     );
 
     // WorkManager only used with no connection available and on Android
@@ -89,13 +91,13 @@ class TaskManager {
     return hiveTask.uniqueId;
   }
 
-  Future<bool> cancelTask(int taskId) async {
+  Future<bool> cancelTask(String taskId) async {
     assert(
       isInitialized == true,
       'Runner is not initialized, please ensure to call the init method!',
     );
 
-    if (_runner?.runningTaskId == taskId) {
+    if (_runner?.runningUniqueTaskId == taskId) {
       throw Exception('This task id is already running!');
     }
 
@@ -119,17 +121,17 @@ class TaskManager {
     return _storage.listPublicPendingTasks();
   }
 
-  void runTask(int taskId) {
+  void runTask(String uniqueTaskId) {
     assert(
       isInitialized == true,
       'Runner is not initialized, please ensure to call the init method!',
     );
 
-    if (_runner?.runningTaskId == taskId) {
+    if (_runner?.runningUniqueTaskId == uniqueTaskId) {
       throw Exception('This task is already running');
     }
 
-    _runner!.forceRunTask(taskId);
+    _runner!.forceRunTask(uniqueTaskId);
   }
 
   Future<String?> _registerTaskWithWorkManager(HiveTask task) async {
