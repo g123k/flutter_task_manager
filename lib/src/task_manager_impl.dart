@@ -1,3 +1,5 @@
+import 'package:task_manager/src/errors/no_connectivity_exception.dart';
+import 'package:task_manager/src/errors/running_task_exception.dart';
 import 'package:task_manager/src/model/task.dart';
 import 'package:task_manager/src/storage/model/hive_task.dart';
 import 'package:task_manager/src/storage/task_manager_storage.dart';
@@ -98,7 +100,7 @@ class TaskManager {
     );
 
     if (_runner?.runningUniqueTaskId == taskId) {
-      throw Exception('This task id is already running!');
+      throw const TaskAlreadyRunningException();
     }
 
     return _runner!.removeTaskId(taskId);
@@ -111,7 +113,7 @@ class TaskManager {
     );
 
     if (_runner?.isRunning == true) {
-      throw Exception('Runner is running, unable to remove tasks!');
+      throw const TaskAlreadyRunningException();
     }
 
     return _runner!.removeAllTasks();
@@ -128,7 +130,9 @@ class TaskManager {
     );
 
     if (_runner?.runningUniqueTaskId == uniqueTaskId) {
-      throw Exception('This task is already running');
+      throw const TaskAlreadyRunningException();
+    } else if (_runner?.hasConnection != true) {
+      throw const NoConnectivityException();
     }
 
     _runner!.forceRunTask(uniqueTaskId);
